@@ -10,9 +10,9 @@ mod create;
 
 #[derive(Debug)]
 pub struct Piece {
-    pub position: Point,
+    position: Point,
     body: Vec<Point>,
-    color: Color,
+    pub color: Color,
 }
 
 #[derive(Debug)]
@@ -55,11 +55,7 @@ impl Piece {
         for point in &self.body {
             let translated = self.position.add(&point.add(&translation));
 
-            let x = usize::try_from(translated.x).ok()?;
-            let y = usize::try_from(translated.y).ok()?;
-
-            grid.blocks.get(x).and_then(|column| column.get(y))?;
-            if let Some(Some(_)) = grid.blocks.get(x).and_then(|line| line.get(y)) {
+            if grid.tile(&translated)?.is_some() {
                 return None;
             };
         }
@@ -77,15 +73,12 @@ impl Piece {
                 x: self.bounding_square_size() as i32 - point.y,
                 y: point.x,
             };
-            let translated = point.add(&self.position);
 
-            let x = usize::try_from(translated.x).ok()?;
-            let y = usize::try_from(translated.y).ok()?;
+            let rotated = point.add(&self.position);
 
-            grid.blocks.get(x).and_then(|column| column.get(y))?;
-            if let Some(Some(_)) = grid.blocks.get(x).and_then(|line| line.get(y)) {
+            if grid.tile(&rotated)?.is_some() {
                 return None;
-            };
+            }
         }
 
         self.body = rotated;
@@ -94,12 +87,19 @@ impl Piece {
     }
 
     pub fn draw<'a>(
-        &mut self,
+        &self,
         canvas: &mut Canvas<Window>,
         creator: &'a TextureCreator<WindowContext>,
     ) {
-        for point in self.body.iter() {
-            Block::new(self.color).draw(canvas, &point.add(&self.position), creator);
+        for point in self.points().iter() {
+            Block::new(self.color).draw(canvas, point, creator);
         }
+    }
+
+    pub fn points(&self) -> Vec<Point> {
+        self.body
+            .iter()
+            .map(|point| point.add(&self.position))
+            .collect()
     }
 }

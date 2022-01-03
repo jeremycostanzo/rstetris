@@ -1,12 +1,13 @@
 extern crate sdl2;
 
-use rand::Rng;
-use rstetris::{grid::Grid, HEIGHT, WIDTH};
+use rstetris::{grid::Grid, pieces::Direction, HEIGHT, WIDTH};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use std::collections::HashSet;
 use std::time::Duration;
+
+const SPEED_FALLING_DURATION: i32 = 2;
 
 pub fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -35,20 +36,17 @@ pub fn main() {
     use rstetris::pieces::Piece;
 
     let mut piece: Piece = rand::random();
-    let x = rand::thread_rng().gen_range(0..=WIDTH - 4) as i32;
-    let y = rand::thread_rng().gen_range(0..=HEIGHT - 4) as i32;
 
-    let random_point = rstetris::Point::new(x, y);
-
-    piece.position = piece.position.add(&random_point);
+    let mut grid = Grid::default();
 
     piece.draw(&mut canvas, &texture_creator);
-
     canvas.present();
 
-    let grid = Grid::default();
-
     let mut prev_keys = HashSet::new();
+
+    let mut update_when_frame_above = 20;
+    let mut frame = 0;
+    let mut current_speed_falling_value = 0;
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -63,25 +61,32 @@ pub fn main() {
             .filter_map(Keycode::from_scancode)
             .collect();
 
+        if keys.contains(&Keycode::J) {
+            current_speed_falling_value += 1;
+        }
+        if current_speed_falling_value > SPEED_FALLING_DURATION {
+            current_speed_falling_value = 0;
+            piece.translate(&grid, Direction::Down);
+        }
+
         // Get the difference between the new and old sets.
         let old_keys = &prev_keys - &keys;
 
         for key in &old_keys {
-            use rstetris::pieces::Direction;
             match key {
-                Keycode::Left => {
+                Keycode::H => {
                     piece.translate(&grid, Direction::Left);
                 }
-                Keycode::Right => {
+                Keycode::L => {
                     piece.translate(&grid, Direction::Right);
                 }
-                Keycode::Up => {
+                Keycode::K => {
                     piece.rotate(&grid);
                 }
-                Keycode::Down => {
-                    piece.translate(&grid, Direction::Down);
-                }
-                Keycode::N => {
+                Keycode::I => {
+                    while piece.translate(&grid, Direction::Down).is_some() {}
+                    grid.add_piece(&piece);
+                    frame = 0;
                     piece = rand::random();
                 }
                 _ => {}
@@ -89,10 +94,20 @@ pub fn main() {
         }
 
         prev_keys = keys;
-        // The rest of the game loop goes here...
+
+        if frame > update_when_frame_above {
+            if piece.translate(&grid, Direction::Down).is_none() {
+                grid.add_piece(&piece);
+                piece = rand::random();
+            }
+            frame = 0;
+        } else {
+            frame += 1;
+        }
 
         canvas.clear();
 
+        grid.draw(&mut canvas, &texture_creator);
         piece.draw(&mut canvas, &texture_creator);
 
         canvas.present();

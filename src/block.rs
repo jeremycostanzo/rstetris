@@ -5,7 +5,7 @@ use sdl2::{
     video::{Window, WindowContext},
 };
 
-pub const SIZE: u32 = 16;
+pub const SIZE: u32 = 40;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Block {

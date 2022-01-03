@@ -36,9 +36,9 @@ pub fn i() -> Piece {
 pub fn l() -> Piece {
     Piece::new(
         vec![
-            Point::new(0, 0),
-            Point::new(0, 1),
-            Point::new(0, 2),
+            Point::new(2, 0),
+            Point::new(2, 1),
+            Point::new(2, 2),
             Point::new(1, 2),
         ],
         Color::GREEN,
@@ -116,7 +116,7 @@ impl Distribution<Piece> for Standard {
             _ => Variant::ReverseL,
         };
 
-        match variant {
+        let mut piece = match variant {
             Variant::T => t(),
             Variant::Z => z(),
             Variant::S => s(),
@@ -124,6 +124,11 @@ impl Distribution<Piece> for Standard {
             Variant::Square => square(),
             Variant::L => l(),
             Variant::ReverseL => reverse_l(),
-        }
+        };
+
+        piece.position.x +=
+            rng.gen_range(0..(crate::WIDTH as i32 - piece.bounding_square_size() as i32));
+
+        piece
     }
 }
