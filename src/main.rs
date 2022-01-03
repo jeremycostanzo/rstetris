@@ -76,10 +76,13 @@ pub fn main() {
                     piece.translate(&grid, Direction::Right);
                 }
                 Keycode::Up => {
-                    piece.translate(&grid, Direction::Up);
+                    piece.rotate(&grid);
                 }
                 Keycode::Down => {
                     piece.translate(&grid, Direction::Down);
+                }
+                Keycode::N => {
+                    piece = rand::random();
                 }
                 _ => {}
             }

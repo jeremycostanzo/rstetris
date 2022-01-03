@@ -7,7 +7,7 @@ use sdl2::{
 
 pub const SIZE: u32 = 16;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Block {
     color: Color,
 }

@@ -59,11 +59,36 @@ impl Piece {
             let y = usize::try_from(translated.y).ok()?;
 
             grid.blocks.get(x).and_then(|column| column.get(y))?;
+            if let Some(Some(_)) = grid.blocks.get(x).and_then(|line| line.get(y)) {
+                return None;
+            };
         }
 
-        for point in self.body.iter_mut() {
-            *point = point.add(&translation);
+        self.position = self.position.add(&translation);
+
+        Some(())
+    }
+
+    pub fn rotate(&mut self, grid: &Grid) -> Option<()> {
+        let mut rotated = self.body.clone();
+
+        for point in rotated.iter_mut() {
+            *point = Point {
+                x: self.bounding_square_size() as i32 - point.y,
+                y: point.x,
+            };
+            let translated = point.add(&self.position);
+
+            let x = usize::try_from(translated.x).ok()?;
+            let y = usize::try_from(translated.y).ok()?;
+
+            grid.blocks.get(x).and_then(|column| column.get(y))?;
+            if let Some(Some(_)) = grid.blocks.get(x).and_then(|line| line.get(y)) {
+                return None;
+            };
         }
+
+        self.body = rotated;
 
         Some(())
     }
