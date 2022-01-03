@@ -1,11 +1,4 @@
-use super::{
-    block::{self, texture_from_color},
-    Point,
-};
-use rand::{
-    distributions::{Distribution, Standard},
-    Rng,
-};
+use crate::{block::Block, grid::Grid, Point};
 
 use sdl2::{
     pixels::Color,
@@ -23,7 +16,7 @@ pub struct Piece {
 }
 
 #[derive(Debug)]
-pub enum CollisionDirection {
+pub enum Direction {
     Left,
     Right,
     Up,
@@ -39,50 +32,49 @@ impl Piece {
         }
     }
 
+    fn bounding_square_size(&self) -> usize {
+        let mut size = 0;
+        for point in &self.body {
+            let max_coord = point.x.max(point.y) as usize;
+            if max_coord > size {
+                size = max_coord
+            }
+        }
+        size
+    }
+
+    pub fn translate(&mut self, grid: &Grid, direction: Direction) -> Option<()> {
+        use Direction::*;
+        let translation = match direction {
+            Left => Point::new(-1, 0),
+            Right => Point::new(1, 0),
+            Up => Point::new(0, -1),
+            Down => Point::new(0, 1),
+        };
+
+        for point in &self.body {
+            let translated = self.position.add(&point.add(&translation));
+
+            let x = usize::try_from(translated.x).ok()?;
+            let y = usize::try_from(translated.y).ok()?;
+
+            grid.blocks.get(x).and_then(|column| column.get(y))?;
+        }
+
+        for point in self.body.iter_mut() {
+            *point = point.add(&translation);
+        }
+
+        Some(())
+    }
+
     pub fn draw<'a>(
         &mut self,
         canvas: &mut Canvas<Window>,
         creator: &'a TextureCreator<WindowContext>,
     ) {
-        let position = &self.position;
-        let texture = texture_from_color(canvas, creator, self.color);
         for point in self.body.iter() {
-            block::draw(canvas, point.add(position), &texture)
-        }
-    }
-}
-
-impl Distribution<Piece> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Piece {
-        enum Variant {
-            T,
-            Z,
-            S,
-            I,
-            Square,
-            L,
-            ReverseL,
-        }
-
-        let variant = match rng.gen_range(0..=6) {
-            // rand 0.8
-            0 => Variant::T,
-            1 => Variant::Z,
-            2 => Variant::S,
-            3 => Variant::I,
-            4 => Variant::Square,
-            5 => Variant::L,
-            _ => Variant::ReverseL,
-        };
-
-        match variant {
-            Variant::T => create::t(),
-            Variant::Z => create::z(),
-            Variant::S => create::s(),
-            Variant::I => create::i(),
-            Variant::Square => create::square(),
-            Variant::L => create::l(),
-            Variant::ReverseL => create::reverse_l(),
+            Block::new(self.color).draw(canvas, &point.add(&self.position), creator);
         }
     }
 }

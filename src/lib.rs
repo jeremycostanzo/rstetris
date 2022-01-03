@@ -1,5 +1,9 @@
 pub mod block;
+pub mod grid;
 pub mod pieces;
+
+pub const WIDTH: u32 = 12;
+pub const HEIGHT: u32 = 24;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Point {

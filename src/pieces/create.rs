@@ -1,4 +1,10 @@
 use crate::Point;
+
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
+
 use sdl2::pixels::Color;
 
 use super::Piece;
@@ -85,4 +91,39 @@ pub fn z() -> Piece {
         ],
         Color::RGB(200, 50, 100),
     )
+}
+
+impl Distribution<Piece> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Piece {
+        enum Variant {
+            T,
+            Z,
+            S,
+            I,
+            Square,
+            L,
+            ReverseL,
+        }
+
+        let variant = match rng.gen_range(0..=6) {
+            // rand 0.8
+            0 => Variant::T,
+            1 => Variant::Z,
+            2 => Variant::S,
+            3 => Variant::I,
+            4 => Variant::Square,
+            5 => Variant::L,
+            _ => Variant::ReverseL,
+        };
+
+        match variant {
+            Variant::T => t(),
+            Variant::Z => z(),
+            Variant::S => s(),
+            Variant::I => i(),
+            Variant::Square => square(),
+            Variant::L => l(),
+            Variant::ReverseL => reverse_l(),
+        }
+    }
 }
